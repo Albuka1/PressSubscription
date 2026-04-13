@@ -30,6 +30,11 @@
                     
                     <Button Content="🔄 Сбросить" Click="Reset_Click" Margin="15,5,5,5" Padding="12,8"/>
                 </WrapPanel>
+                
+                <TextBlock Text="💡 Подсказка: Двойной клик по изданию откроет карточку для оформления подписки" 
+                           FontSize="11" 
+                           Opacity="0.5" 
+                           Margin="5,10,0,0"/>
             </StackPanel>
         </Border>
 
@@ -37,7 +42,8 @@
             <ListView x:Name="PublicationsList" 
                       Background="Transparent" 
                       BorderThickness="0"
-                      SelectionMode="Single">
+                      SelectionMode="Single"
+                      MouseDoubleClick="PublicationsList_MouseDoubleClick">
                 
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>

@@ -124,4 +124,14 @@ public partial class PublicationsControl : UserControl
             LoadData();
         }
     }
+
+    private void PublicationsList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (PublicationsList.SelectedItem is Publication pub)
+        {
+            var cardWindow = new PublicationCardWindow(pub);
+            cardWindow.Owner = Window.GetWindow(this);
+            cardWindow.ShowDialog();
+        }
+    }
 }

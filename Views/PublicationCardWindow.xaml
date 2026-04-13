@@ -1,0 +1,92 @@
+<Window x:Class="PressSubscription.Views.PublicationCardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Карточка издания"
+        Width="500"
+        Height="600"
+        MinWidth="450"
+        MinHeight="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="{StaticResource BgColor}">
+
+    <Border Background="White" CornerRadius="12" Margin="15" Padding="20">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <Image x:Name="PublicationImage" 
+                       Height="150" 
+                       Stretch="UniformToFill" 
+                       Margin="0,0,0,15"
+                       HorizontalAlignment="Center"/>
+
+                <TextBlock x:Name="TitleText" 
+                           FontSize="22" 
+                           FontWeight="Bold" 
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,5"/>
+
+                <TextBlock x:Name="PublisherText" 
+                           FontSize="14" 
+                           Opacity="0.7" 
+                           Margin="0,0,0,10"/>
+
+                <TextBlock x:Name="PriceText" 
+                           FontSize="16" 
+                           FontWeight="SemiBold" 
+                           Foreground="{StaticResource PrimaryColor}"
+                           Margin="0,0,0,20"/>
+
+                <Separator Margin="0,5,0,15"/>
+
+                <TextBlock Text="Оформление подписки" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Margin="0,0,0,15"/>
+
+                <TextBlock Text="Подписчик:" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                <ComboBox x:Name="SubscriberCombo" 
+                          DisplayMemberPath="FullName"
+                          Margin="0,0,0,15" 
+                          Height="35"/>
+
+                <TextBlock Text="Дата начала:" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                <DatePicker x:Name="StartDatePicker" 
+                            Margin="0,0,0,15" 
+                            Height="35"/>
+
+                <TextBlock Text="Количество месяцев:" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                <TextBox x:Name="MonthsBox" 
+                         Text="6" 
+                         Margin="0,0,0,15" 
+                         Height="35"/>
+
+                <Border Background="#F5F5F5" 
+                        CornerRadius="8" 
+                        Padding="10" 
+                        Margin="0,10,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Предварительный расчёт:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="BaseCostPreview" Text="Базовая стоимость: 0 ₽"/>
+                        <TextBlock x:Name="DeliveryPreview" Text="Доставка (1%): 0 ₽"/>
+                        <TextBlock x:Name="VatPreview" Text="НДС (18%): 0 ₽"/>
+                        <TextBlock x:Name="TotalPreview" Text="Итого: 0 ₽" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}"/>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                    <Button Content="✅ Оформить подписку" 
+                            Style="{StaticResource PrimaryButton}"
+                            Click="Subscribe_Click"
+                            Width="150"
+                            Margin="5"/>
+                    <Button Content="❌ Отмена" 
+                            Click="Cancel_Click"
+                            Width="80"
+                            Margin="5"/>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</Window>
