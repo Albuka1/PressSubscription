@@ -20,6 +20,12 @@ public partial class SubscriptionsControl : UserControl
         InitializeComponent();
         LoadData();
         ApplyUserPermissions();
+
+        this.IsVisibleChanged += (s, e) => 
+        {
+            if (this.IsVisible)
+                LoadData();
+        };
     }
 
     private void ApplyUserPermissions()

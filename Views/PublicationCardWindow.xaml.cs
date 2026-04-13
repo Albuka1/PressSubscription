@@ -63,6 +63,8 @@ public partial class PublicationCardWindow : Window
     }
 
     private void Subscribe_Click(object sender, RoutedEventArgs e)
+{
+    try
     {
         if (SubscriberCombo.SelectedItem is not Subscriber subscriber)
         {
@@ -83,7 +85,7 @@ public partial class PublicationCardWindow : Window
             SubscriberId = subscriber.Id,
             PublicationId = _publication.Id,
             StartDate = startDate,
-            Months = months
+            Months = months,
         };
 
         SubscriptionCalculator.Calculate(subscription);
@@ -102,6 +104,11 @@ public partial class PublicationCardWindow : Window
         DialogResult = true;
         Close();
     }
+    catch (Exception ex)
+    {
+        MessageBox.Show($"Ошибка при оформлении подписки:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+}
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
