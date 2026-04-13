@@ -1,0 +1,40 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET 8.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    
+    - name: Publish application
+      run: dotnet publish -c Release -o publish -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+    
+    - name: Copy Images and Assets
+      run: |
+        Copy-Item -Path "Images" -Destination "publish/Images" -Recurse -Force
+        Copy-Item -Path "Assets" -Destination "publish/Assets" -Recurse -Force
+        Copy-Item -Path "ImportTemplate.xlsx" -Destination "publish/ImportTemplate.xlsx" -Force
+    
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PressSubscription
+        path: publish/
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: publish/PressSubscription.exe
+        generate_release_notes: true
