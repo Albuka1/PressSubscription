@@ -22,4 +22,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+  <Reference Include="Microsoft.VisualBasic" />
+  </ItemGroup>
+
 </Project>

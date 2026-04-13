@@ -10,6 +10,6 @@ public class Subscription
     public int PublicationId { get; set; }
     public Publication Publication { get; set; } = null!;
 
-    public DateTime StartDate { get; set; }
+    public DateTime StartDate { get; set; } = DateTime.Now;
     public int Months { get; set; }
 }
