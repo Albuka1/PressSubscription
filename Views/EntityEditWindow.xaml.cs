@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using PressSubscription.Models;
 
 namespace PressSubscription.Views;
@@ -122,7 +121,13 @@ public partial class EntityEditWindow : Window
         {
             Name = $"{propertyName}Box",
             Margin = new Thickness(0, 0, 0, 15),
-            Height = 30
+            Height = 35,
+            TextWrapping = TextWrapping.Wrap,
+            AcceptsReturn = true,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            MinHeight = 35,
+            MaxHeight = 120
         };
         
         FieldsPanel.Children.Add(labelBlock);
@@ -144,7 +149,7 @@ public partial class EntityEditWindow : Window
         {
             Name = $"{propertyName}Picker",
             Margin = new Thickness(0, 0, 0, 15),
-            Height = 30,
+            Height = 35,
             SelectedDate = DateTime.Today
         };
         
@@ -168,7 +173,6 @@ public partial class EntityEditWindow : Window
             }
         }
         
-        // Загружаем дату для DatePicker
         if (_datePicker != null && _entityType == typeof(Subscription))
         {
             var property = _entityType.GetProperty("StartDate");
@@ -207,7 +211,6 @@ public partial class EntityEditWindow : Window
             }
         }
         
-        // Сохраняем дату из DatePicker
         if (_datePicker != null && _entityType == typeof(Subscription) && _datePicker.SelectedDate.HasValue)
         {
             var property = _entityType.GetProperty("StartDate");
@@ -220,14 +223,12 @@ public partial class EntityEditWindow : Window
 
     private bool Validate()
     {
-        // Валидация для Subscriber
         if (_textBoxes.ContainsKey("FullName") && string.IsNullOrWhiteSpace(_textBoxes["FullName"].Text))
         {
             MessageBox.Show("Введите ФИО", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             return false;
         }
         
-        // Валидация для Publication
         if (_textBoxes.ContainsKey("Title") && string.IsNullOrWhiteSpace(_textBoxes["Title"].Text))
         {
             MessageBox.Show("Введите название", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -243,7 +244,6 @@ public partial class EntityEditWindow : Window
             }
         }
         
-        // Валидация для Subscription
         if (_textBoxes.ContainsKey("SubscriberId"))
         {
             if (!int.TryParse(_textBoxes["SubscriberId"].Text, out var subId) || subId <= 0)
@@ -271,7 +271,6 @@ public partial class EntityEditWindow : Window
             }
         }
         
-        // Валидация даты
         if (_datePicker != null && !_datePicker.SelectedDate.HasValue)
         {
             MessageBox.Show("Выберите дату начала", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);

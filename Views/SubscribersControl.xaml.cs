@@ -8,12 +8,12 @@ using PressSubscription.Services;
 
 namespace PressSubscription.Views;
 
-public partial class SubscribersWindow : Window
+public partial class SubscribersControl : UserControl
 {
     private readonly AppDbContext _db = new();
     private ObservableCollection<Subscriber> _subscribers = new();
 
-    public SubscribersWindow()
+    public SubscribersControl()
     {
         InitializeComponent();
         LoadData();
@@ -24,18 +24,18 @@ public partial class SubscribersWindow : Window
     {
         var isAdmin = AuthService.IsAdmin();
         
-        if (!isAdmin)
-        {
-            AddButton.Visibility = Visibility.Collapsed;
-            EditButton.Visibility = Visibility.Collapsed;
-            DeleteButton.Visibility = Visibility.Collapsed;
-        }
+        AddButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+        EditButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+        DeleteButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void LoadData()
     {
-        var list = _db.Subscribers.ToList();
-        _subscribers = new ObservableCollection<Subscriber>(list);
+        _subscribers.Clear();
+        foreach (var item in _db.Subscribers.ToList())
+        {
+            _subscribers.Add(item);
+        }
         SubscribersGrid.ItemsSource = _subscribers;
     }
 
@@ -47,22 +47,14 @@ public partial class SubscribersWindow : Window
             : _subscribers.Where(s =>
                 s.FullName.ToLower().Contains(searchText) ||
                 s.Email.ToLower().Contains(searchText) ||
-                (s.Phone?.Contains(searchText) ?? false) ||
-                (s.Address?.Contains(searchText) ?? false)).ToList();
+                (s.Phone?.ToLower().Contains(searchText) ?? false) ||
+                (s.Address?.ToLower().Contains(searchText) ?? false)).ToList();
 
         SubscribersGrid.ItemsSource = filtered;
     }
 
-    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        ApplyFilter();
-    }
-
-    private void Reset_Click(object sender, RoutedEventArgs e)
-    {
-        SearchBox.Text = "";
-        ApplyFilter();
-    }
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilter();
+    private void Reset_Click(object sender, RoutedEventArgs e) => SearchBox.Text = "";
 
     private void Add_Click(object sender, RoutedEventArgs e)
     {
@@ -81,8 +73,7 @@ public partial class SubscribersWindow : Window
     {
         if (SubscribersGrid.SelectedItem is not Subscriber sub)
         {
-            MessageBox.Show("Выберите подписчика", "Ошибка", 
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Выберите подписчика", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -95,7 +86,6 @@ public partial class SubscribersWindow : Window
             sub.Address = updated.Address;
             sub.Phone = updated.Phone;
             sub.Email = updated.Email;
-            
             _db.SaveChanges();
             LoadData();
         }
@@ -105,14 +95,17 @@ public partial class SubscribersWindow : Window
     {
         if (SubscribersGrid.SelectedItem is not Subscriber sub) return;
 
-        var result = MessageBox.Show($"Удалить подписчика \"{sub.FullName}\"?", "Подтверждение",
-            MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-        if (result == MessageBoxResult.Yes)
+        if (MessageBox.Show($"Удалить подписчика \"{sub.FullName}\"?", "Подтверждение",
+            MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
         {
             _db.Subscribers.Remove(sub);
             _db.SaveChanges();
             LoadData();
         }
+    }
+
+    private void Export_Click(object sender, RoutedEventArgs e)
+    {
+        // TODO: Экспорт в Excel
     }
 }

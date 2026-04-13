@@ -1,0 +1,68 @@
+<UserControl x:Class="PressSubscription.Views.PublicationsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource TopPanelBorder}" Margin="0,0,0,15">
+            <StackPanel>
+                <WrapPanel Margin="0,0,0,10">
+                    <Button x:Name="AddButton" Content="➕ Добавить" Click="Add_Click" Margin="5" Padding="12,8"/>
+                    <Button x:Name="EditButton" Content="✏️ Редактировать" Click="Edit_Click" Margin="5" Padding="12,8"/>
+                    <Button x:Name="DeleteButton" Content="🗑️ Удалить" Click="Delete_Click" Margin="5" Padding="12,8"/>
+                </WrapPanel>
+
+                <WrapPanel>
+                    <TextBlock Text="🔍 Поиск:" VerticalAlignment="Center" Margin="5,0"/>
+                    <TextBox x:Name="SearchBox" Width="250" Margin="5" TextChanged="SearchBox_TextChanged"/>
+                    
+                    <TextBlock Text="📊 Сортировать:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                    <ComboBox x:Name="SortCombo" Width="160" Margin="5" SelectionChanged="SortCombo_SelectionChanged">
+                        <ComboBoxItem Content="Названию (А-Я)"/>
+                        <ComboBoxItem Content="Названию (Я-А)"/>
+                        <ComboBoxItem Content="Цене (возрастание)"/>
+                        <ComboBoxItem Content="Цене (убывание)"/>
+                    </ComboBox>
+                    
+                    <Button Content="🔄 Сбросить" Click="Reset_Click" Margin="15,5,5,5" Padding="12,8"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ListView x:Name="PublicationsList" 
+                      Background="Transparent" 
+                      BorderThickness="0"
+                      SelectionMode="Single">
+                
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="220" Margin="10" Padding="10" Background="White" CornerRadius="12" 
+                                BorderBrush="#E0E0E0" BorderThickness="1">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.15"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <Image Source="{Binding Image}" Height="120" Stretch="UniformToFill" Margin="0,0,0,10"/>
+                                <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding Publisher}" Opacity="0.7" Margin="0,2,0,0"/>
+                                <TextBlock Text="{Binding PricePerMonth, StringFormat='💰 {0} ₽/мес'}" 
+                                           Margin="0,6,0,0" FontWeight="SemiBold" Foreground="#2E7D32"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

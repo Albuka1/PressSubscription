@@ -10,12 +10,12 @@ using PressSubscription.Services;
 
 namespace PressSubscription.Views;
 
-public partial class PublicationsWindow : Window
+public partial class PublicationsControl : UserControl
 {
     private readonly AppDbContext _db = new();
     private ObservableCollection<Publication> _publications = new();
 
-    public PublicationsWindow()
+    public PublicationsControl()
     {
         InitializeComponent();
         LoadData();
@@ -25,33 +25,30 @@ public partial class PublicationsWindow : Window
     private void ApplyUserPermissions()
     {
         var isAdmin = AuthService.IsAdmin();
-        
-        if (!isAdmin)
-        {
-            AddButton.Visibility = Visibility.Collapsed;
-            EditButton.Visibility = Visibility.Collapsed;
-            DeleteButton.Visibility = Visibility.Collapsed;
-        }
+        AddButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+        EditButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+        DeleteButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void LoadData()
     {
-        var list = _db.Publications.ToList();
-        _publications = new ObservableCollection<Publication>(list);
+        _publications.Clear();
+        foreach (var item in _db.Publications.ToList())
+        {
+            _publications.Add(item);
+        }
         PublicationsList.ItemsSource = _publications;
         ApplyFilterAndSort();
     }
 
     private void ApplyFilterAndSort()
     {
-        var query = _db.Publications.AsEnumerable();
+        var query = _publications.AsEnumerable();
         
         var searchText = SearchBox.Text?.Trim().ToLower();
         if (!string.IsNullOrEmpty(searchText))
         {
-            query = query.Where(p => 
-                p.Title.ToLower().Contains(searchText) || 
-                p.Publisher.ToLower().Contains(searchText));
+            query = query.Where(p => p.Title.ToLower().Contains(searchText) || p.Publisher.ToLower().Contains(searchText));
         }
         
         var selectedSort = (SortCombo.SelectedItem as ComboBoxItem)?.Content.ToString();
@@ -64,23 +61,12 @@ public partial class PublicationsWindow : Window
             _ => query.OrderBy(p => p.Title)
         };
         
-        _publications.Clear();
-        foreach (var item in query)
-        {
-            _publications.Add(item);
-        }
+        PublicationsList.ItemsSource = query.ToList();
     }
 
-    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        ApplyFilterAndSort();
-    }
-
-    private void SortCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        ApplyFilterAndSort();
-    }
-
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilterAndSort();
+    private void SortCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilterAndSort();
+    
     private void Reset_Click(object sender, RoutedEventArgs e)
     {
         SearchBox.Text = "";
@@ -96,9 +82,7 @@ public partial class PublicationsWindow : Window
         if (window.ShowDialog() == true && window.Entity is Publication publication)
         {
             if (string.IsNullOrWhiteSpace(publication.ImagePath))
-            {
                 publication.ImagePath = Path.Combine("Images", "placeholder.png");
-            }
             
             _db.Publications.Add(publication);
             _db.SaveChanges();
@@ -110,8 +94,7 @@ public partial class PublicationsWindow : Window
     {
         if (PublicationsList.SelectedItem is not Publication pub)
         {
-            MessageBox.Show("Выберите издание для редактирования", "Ошибка", 
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Выберите издание", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -124,7 +107,6 @@ public partial class PublicationsWindow : Window
             pub.Publisher = updated.Publisher;
             pub.PricePerMonth = updated.PricePerMonth;
             pub.ImagePath = updated.ImagePath;
-            
             _db.SaveChanges();
             LoadData();
         }
@@ -134,10 +116,8 @@ public partial class PublicationsWindow : Window
     {
         if (PublicationsList.SelectedItem is not Publication pub) return;
 
-        var result = MessageBox.Show($"Удалить издание \"{pub.Title}\"?", "Подтверждение",
-            MessageBoxButton.YesNo, MessageBoxImage.Question);
-        
-        if (result == MessageBoxResult.Yes)
+        if (MessageBox.Show($"Удалить издание \"{pub.Title}\"?", "Подтверждение",
+            MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
         {
             _db.Publications.Remove(pub);
             _db.SaveChanges();

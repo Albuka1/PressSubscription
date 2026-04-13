@@ -3,57 +3,47 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
-using Microsoft.EntityFrameworkCore;
 using PressSubscription.Data;
 using PressSubscription.Models;
 using PressSubscription.Services;
 
 namespace PressSubscription.Views;
 
-// Конвертер для отображения роли
 public class RoleToTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is string role)
-        {
             return role == "Admin" ? "👑 Администратор" : "👤 Пользователь";
-        }
         return "❓ Неизвестно";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotImplementedException();
 }
 
-// Конвертер для отображения статуса активности
 public class ActiveToTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is bool isActive)
-        {
             return isActive ? "✅ Активен" : "🔒 Заблокирован";
-        }
         return "❓ Неизвестно";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotImplementedException();
 }
 
-public partial class AdminPanelWindow : Window
+public partial class AdminPanelControl : UserControl
 {
     private readonly AppDbContext _db = new();
     private ObservableCollection<User> _users = new();
     private User? _currentUser;
 
-    public AdminPanelWindow()
+    public AdminPanelControl()
     {
         InitializeComponent();
         _currentUser = AuthService.GetCurrentUser();
@@ -63,9 +53,8 @@ public partial class AdminPanelWindow : Window
 
     private void LoadData()
     {
-        var list = _db.Users.OrderBy(u => u.Id).ToList();
         _users.Clear();
-        foreach (var user in list)
+        foreach (var user in _db.Users.OrderBy(u => u.Id))
         {
             _users.Add(user);
         }
@@ -138,7 +127,6 @@ public partial class AdminPanelWindow : Window
             return;
         }
 
-        // Проверяем, не последний ли это админ
         var adminCount = _db.Users.Count(u => u.Role == "Admin");
         if (adminCount <= 1)
         {

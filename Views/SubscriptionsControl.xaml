@@ -1,0 +1,77 @@
+<UserControl x:Class="PressSubscription.Views.SubscriptionsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource TopPanelBorder}" Margin="0,0,0,15">
+            <StackPanel>
+                <WrapPanel Margin="0,0,0,10">
+                    <Button x:Name="AddButton" Content="➕ Добавить" Click="Add_Click" Margin="5" Padding="12,8"/>
+                    <Button x:Name="EditButton" Content="✏️ Редактировать" Click="Edit_Click" Margin="5" Padding="12,8"/>
+                    <Button x:Name="DeleteButton" Content="🗑️ Удалить" Click="Delete_Click" Margin="5" Padding="12,8"/>
+                </WrapPanel>
+
+                <WrapPanel>
+                    <TextBlock Text="🔍 Поиск:" VerticalAlignment="Center" Margin="5,0"/>
+                    <TextBox x:Name="SearchBox" Width="250" Margin="5" TextChanged="SearchBox_TextChanged"/>
+                    <Button Content="🔄 Сбросить" Click="Reset_Click" Margin="15,5,5,5" Padding="12,8"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <DataGrid x:Name="SubscriptionsGrid" 
+                  Grid.Row="1"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  SelectionMode="Single"
+                  IsReadOnly="True"
+                  RowHeight="40"
+                  AlternatingRowBackground="#F9F9F9"
+                  MinWidth="900">
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                <DataGridTextColumn Header="Подписчик" Binding="{Binding Subscriber.FullName}" Width="160"/>
+                <DataGridTextColumn Header="Издание" Binding="{Binding Publication.Title}" Width="160"/>
+                
+                <DataGridTextColumn Header="Старт" Width="100">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="StartDate" StringFormat="dd.MM.yyyy"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                
+                <DataGridTextColumn Header="Месяцев" Binding="{Binding Months}" Width="80"/>
+                
+                <DataGridTextColumn Header="База" Width="100">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="BaseCost" StringFormat="{}{0:N2} ₽"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                
+                <DataGridTextColumn Header="Доставка" Width="100">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="DeliveryCost" StringFormat="{}{0:N2} ₽"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                
+                <DataGridTextColumn Header="НДС" Width="100">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="Vat" StringFormat="{}{0:N2} ₽"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                
+                <DataGridTextColumn Header="Итого" Width="100">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="TotalCost" StringFormat="{}{0:N2} ₽"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+
+        </DataGrid>
+    </Grid>
+</UserControl>

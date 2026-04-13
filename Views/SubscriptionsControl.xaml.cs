@@ -10,12 +10,12 @@ using PressSubscription.Services;
 
 namespace PressSubscription.Views;
 
-public partial class SubscriptionsWindow : Window
+public partial class SubscriptionsControl : UserControl
 {
     private readonly AppDbContext _db = new();
     private ObservableCollection<Subscription> _subscriptions = new();
 
-    public SubscriptionsWindow()
+    public SubscriptionsControl()
     {
         InitializeComponent();
         LoadData();
@@ -25,13 +25,9 @@ public partial class SubscriptionsWindow : Window
     private void ApplyUserPermissions()
     {
         var isAdmin = AuthService.IsAdmin();
-        
-        if (!isAdmin)
-        {
-            AddButton.Visibility = Visibility.Collapsed;
-            EditButton.Visibility = Visibility.Collapsed;
-            DeleteButton.Visibility = Visibility.Collapsed;
-        }
+        AddButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+        EditButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+        DeleteButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void LoadData()
@@ -46,7 +42,11 @@ public partial class SubscriptionsWindow : Window
             SubscriptionCalculator.Calculate(s);
         }
 
-        _subscriptions = new ObservableCollection<Subscription>(list);
+        _subscriptions.Clear();
+        foreach (var item in list)
+        {
+            _subscriptions.Add(item);
+        }
         SubscriptionsGrid.ItemsSource = _subscriptions;
         ApplyFilter();
     }
@@ -69,16 +69,8 @@ public partial class SubscriptionsWindow : Window
         SubscriptionsGrid.ItemsSource = filtered;
     }
 
-    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        ApplyFilter();
-    }
-
-    private void Reset_Click(object sender, RoutedEventArgs e)
-    {
-        SearchBox.Text = "";
-        ApplyFilter();
-    }
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilter();
+    private void Reset_Click(object sender, RoutedEventArgs e) => SearchBox.Text = "";
 
     private void Add_Click(object sender, RoutedEventArgs e)
     {
@@ -87,25 +79,19 @@ public partial class SubscriptionsWindow : Window
         
         if (window.ShowDialog() == true && window.Entity is Subscription subscription)
         {
-            var subscriber = _db.Subscribers.FirstOrDefault(x => x.Id == subscription.SubscriberId);
-            var publication = _db.Publications.FirstOrDefault(x => x.Id == subscription.PublicationId);
-            
-            if (subscriber == null)
+            if (_db.Subscribers.Any(x => x.Id == subscription.SubscriberId) == false)
             {
-                MessageBox.Show($"Подписчик с ID {subscription.SubscriberId} не найден", "Ошибка", 
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Подписчик с ID {subscription.SubscriberId} не найден", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             
-            if (publication == null)
+            if (_db.Publications.Any(x => x.Id == subscription.PublicationId) == false)
             {
-                MessageBox.Show($"Издание с ID {subscription.PublicationId} не найдено", "Ошибка", 
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Издание с ID {subscription.PublicationId} не найдено", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             
             SubscriptionCalculator.Calculate(subscription);
-            
             _db.Subscriptions.Add(subscription);
             _db.SaveChanges();
             LoadData();
@@ -116,48 +102,20 @@ public partial class SubscriptionsWindow : Window
     {
         if (SubscriptionsGrid.SelectedItem is not Subscription sub)
         {
-            MessageBox.Show("Выберите подписку для редактирования", "Ошибка", 
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Выберите подписку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
-        var originalSubscriberId = sub.SubscriberId;
-        var originalPublicationId = sub.PublicationId;
-        
         var window = new EntityEditWindow();
         window.SetEntity(sub);
         
         if (window.ShowDialog() == true && window.Entity is Subscription updated)
         {
-            if (originalSubscriberId != updated.SubscriberId)
-            {
-                var subscriber = _db.Subscribers.FirstOrDefault(x => x.Id == updated.SubscriberId);
-                if (subscriber == null)
-                {
-                    MessageBox.Show($"Подписчик с ID {updated.SubscriberId} не найден", "Ошибка", 
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-                sub.SubscriberId = updated.SubscriberId;
-            }
-            
-            if (originalPublicationId != updated.PublicationId)
-            {
-                var publication = _db.Publications.FirstOrDefault(x => x.Id == updated.PublicationId);
-                if (publication == null)
-                {
-                    MessageBox.Show($"Издание с ID {updated.PublicationId} не найдено", "Ошибка", 
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-                sub.PublicationId = updated.PublicationId;
-            }
-            
+            sub.SubscriberId = updated.SubscriberId;
+            sub.PublicationId = updated.PublicationId;
             sub.Months = updated.Months;
             sub.StartDate = updated.StartDate;
-            
             SubscriptionCalculator.Calculate(sub);
-            
             _db.SaveChanges();
             LoadData();
         }
@@ -167,10 +125,8 @@ public partial class SubscriptionsWindow : Window
     {
         if (SubscriptionsGrid.SelectedItem is not Subscription sub) return;
 
-        var result = MessageBox.Show($"Удалить подписку #{sub.Id}?", "Подтверждение",
-            MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-        if (result == MessageBoxResult.Yes)
+        if (MessageBox.Show($"Удалить подписку #{sub.Id}?", "Подтверждение",
+            MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
         {
             _db.Subscriptions.Remove(sub);
             _db.SaveChanges();
