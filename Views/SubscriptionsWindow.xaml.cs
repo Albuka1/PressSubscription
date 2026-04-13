@@ -1,6 +1,8 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
 using PressSubscription.Data;
 using PressSubscription.Models;
@@ -11,6 +13,7 @@ namespace PressSubscription.Views;
 public partial class SubscriptionsWindow : Window
 {
     private readonly AppDbContext _db = new();
+    private ObservableCollection<Subscription> _subscriptions = new();
 
     public SubscriptionsWindow()
     {
@@ -30,43 +33,135 @@ public partial class SubscriptionsWindow : Window
             SubscriptionCalculator.Calculate(s);
         }
 
-        SubscriptionsGrid.ItemsSource = list;
+        _subscriptions = new ObservableCollection<Subscription>(list);
+        SubscriptionsGrid.ItemsSource = _subscriptions;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        var searchText = SearchBox.Text?.Trim().ToLower();
+        
+        if (string.IsNullOrEmpty(searchText))
+        {
+            SubscriptionsGrid.ItemsSource = _subscriptions;
+            return;
+        }
+        
+        var filtered = _subscriptions.Where(s =>
+            (s.Subscriber?.FullName?.ToLower().Contains(searchText) ?? false) ||
+            (s.Publication?.Title?.ToLower().Contains(searchText) ?? false) ||
+            s.Id.ToString().Contains(searchText)).ToList();
+        
+        SubscriptionsGrid.ItemsSource = filtered;
+    }
+
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ApplyFilter();
+    }
+
+    private void Reset_Click(object sender, RoutedEventArgs e)
+    {
+        SearchBox.Text = "";
+        ApplyFilter();
     }
 
     private void Add_Click(object sender, RoutedEventArgs e)
     {
-        var subIdText = Microsoft.VisualBasic.Interaction.InputBox("ID подписчика:");
-        if (!int.TryParse(subIdText, out var subId)) return;
-
-        var pubIdText = Microsoft.VisualBasic.Interaction.InputBox("ID издания:");
-        if (!int.TryParse(pubIdText, out var pubId)) return;
-
-        var monthsText = Microsoft.VisualBasic.Interaction.InputBox("Месяцев:");
-        if (!int.TryParse(monthsText, out var months)) return;
-
-        var dateText = Microsoft.VisualBasic.Interaction.InputBox("Дата начала (yyyy-MM-dd):");
-        if (!DateTime.TryParse(dateText, out var startDate)) return;
-
-        var subscriber = _db.Subscribers.FirstOrDefault(x => x.Id == subId);
-        var publication = _db.Publications.FirstOrDefault(x => x.Id == pubId);
-
-        if (subscriber == null || publication == null)
+        var window = new EntityEditWindow();
+        window.SetEntity((Subscription?)null);
+        
+        if (window.ShowDialog() == true && window.Entity is Subscription subscription)
         {
-            MessageBox.Show("Неверный ID подписчика или издания");
+            var subscriber = _db.Subscribers.FirstOrDefault(x => x.Id == subscription.SubscriberId);
+            var publication = _db.Publications.FirstOrDefault(x => x.Id == subscription.PublicationId);
+            
+            if (subscriber == null)
+            {
+                MessageBox.Show($"Подписчик с ID {subscription.SubscriberId} не найден", "Ошибка", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            if (publication == null)
+            {
+                MessageBox.Show($"Издание с ID {subscription.PublicationId} не найдено", "Ошибка", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            SubscriptionCalculator.Calculate(subscription);
+            
+            _db.Subscriptions.Add(subscription);
+            _db.SaveChanges();
+            LoadData();
+        }
+    }
+
+    private void Edit_Click(object sender, RoutedEventArgs e)
+    {
+        if (SubscriptionsGrid.SelectedItem is not Subscription sub)
+        {
+            MessageBox.Show("Выберите подписку для редактирования", "Ошибка", 
+                MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
-        var sub = new Subscription
+        var originalSubscriberId = sub.SubscriberId;
+        var originalPublicationId = sub.PublicationId;
+        
+        var window = new EntityEditWindow();
+        window.SetEntity(sub);
+        
+        if (window.ShowDialog() == true && window.Entity is Subscription updated)
         {
-            SubscriberId = subId,
-            PublicationId = pubId,
-            Months = months,
-            StartDate = startDate
-        };
+            if (originalSubscriberId != updated.SubscriberId)
+            {
+                var subscriber = _db.Subscribers.FirstOrDefault(x => x.Id == updated.SubscriberId);
+                if (subscriber == null)
+                {
+                    MessageBox.Show($"Подписчик с ID {updated.SubscriberId} не найден", "Ошибка", 
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                sub.SubscriberId = updated.SubscriberId;
+            }
+            
+            if (originalPublicationId != updated.PublicationId)
+            {
+                var publication = _db.Publications.FirstOrDefault(x => x.Id == updated.PublicationId);
+                if (publication == null)
+                {
+                    MessageBox.Show($"Издание с ID {updated.PublicationId} не найдено", "Ошибка", 
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                sub.PublicationId = updated.PublicationId;
+            }
+            
+            sub.Months = updated.Months;
+            sub.StartDate = updated.StartDate;
+            
+            SubscriptionCalculator.Calculate(sub);
+            
+            _db.SaveChanges();
+            LoadData();
+        }
+    }
 
-        _db.Subscriptions.Add(sub);
-        _db.SaveChanges();
+    private void Delete_Click(object sender, RoutedEventArgs e)
+    {
+        if (SubscriptionsGrid.SelectedItem is not Subscription sub) return;
 
-        LoadData();
+        var result = MessageBox.Show($"Удалить подписку #{sub.Id}?", "Подтверждение",
+            MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            _db.Subscriptions.Remove(sub);
+            _db.SaveChanges();
+            LoadData();
+        }
     }
 }

@@ -1,13 +1,18 @@
-using System.Linq;
+using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using PressSubscription.Data;
+using PressSubscription.Models;
 
 namespace PressSubscription.Views;
 
 public partial class PublicationsWindow : Window
 {
     private readonly AppDbContext _db = new();
+    private ObservableCollection<Publication> _publications = new();
 
     public PublicationsWindow()
     {
@@ -17,43 +22,108 @@ public partial class PublicationsWindow : Window
 
     private void LoadData()
     {
-        PublicationsList.ItemsSource = _db.Publications.ToList();
+        var list = _db.Publications.ToList();
+        _publications = new ObservableCollection<Publication>(list);
+        PublicationsList.ItemsSource = _publications;
+        ApplyFilterAndSort();
+    }
+
+    private void ApplyFilterAndSort()
+    {
+        var query = _db.Publications.AsEnumerable();
+        
+        var searchText = SearchBox.Text?.Trim().ToLower();
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            query = query.Where(p => 
+                p.Title.ToLower().Contains(searchText) || 
+                p.Publisher.ToLower().Contains(searchText));
+        }
+        
+        var selectedSort = (SortCombo.SelectedItem as ComboBoxItem)?.Content.ToString();
+        query = selectedSort switch
+        {
+            "Названию (А-Я)" => query.OrderBy(p => p.Title),
+            "Названию (Я-А)" => query.OrderByDescending(p => p.Title),
+            "Цене (возрастание)" => query.OrderBy(p => p.PricePerMonth),
+            "Цене (убывание)" => query.OrderByDescending(p => p.PricePerMonth),
+            _ => query.OrderBy(p => p.Title)
+        };
+        
+        _publications.Clear();
+        foreach (var item in query)
+        {
+            _publications.Add(item);
+        }
+    }
+
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ApplyFilterAndSort();
+    }
+
+    private void SortCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        ApplyFilterAndSort();
+    }
+
+    private void Reset_Click(object sender, RoutedEventArgs e)
+    {
+        SearchBox.Text = "";
+        SortCombo.SelectedIndex = -1;
+        LoadData();
     }
 
     private void Add_Click(object sender, RoutedEventArgs e)
     {
-        var title = Microsoft.VisualBasic.Interaction.InputBox("Название:");
-        if (string.IsNullOrWhiteSpace(title)) return;
-
-        var publisher = Microsoft.VisualBasic.Interaction.InputBox("Издатель:");
-        if (string.IsNullOrWhiteSpace(publisher)) return;
-
-        var priceText = Microsoft.VisualBasic.Interaction.InputBox("Цена:");
-        if (!decimal.TryParse(priceText, out var price)) return;
-
-        var imageFile = Microsoft.VisualBasic.Interaction.InputBox("Имя картинки (news.png):");
-        if (string.IsNullOrWhiteSpace(imageFile))
-            imageFile = "placeholder.png";
-
-        var imagePath = Path.Combine("Images", imageFile);
-
-        var pub = new Models.Publication
+        var window = new EntityEditWindow();
+        window.SetEntity((Publication?)null);
+        
+        if (window.ShowDialog() == true && window.Entity is Publication publication)
         {
-            Title = title,
-            Publisher = publisher,
-            PricePerMonth = price,
-            ImagePath = imagePath
-        };
+            if (string.IsNullOrWhiteSpace(publication.ImagePath))
+            {
+                publication.ImagePath = Path.Combine("Images", "placeholder.png");
+            }
+            
+            _db.Publications.Add(publication);
+            _db.SaveChanges();
+            LoadData();
+        }
+    }
 
-        _db.Publications.Add(pub);
-        _db.SaveChanges();
+    private void Edit_Click(object sender, RoutedEventArgs e)
+    {
+        if (PublicationsList.SelectedItem is not Publication pub)
+        {
+            MessageBox.Show("Выберите издание для редактирования", "Ошибка", 
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
 
-        LoadData();
+        var window = new EntityEditWindow();
+        window.SetEntity(pub);
+        
+        if (window.ShowDialog() == true && window.Entity is Publication updated)
+        {
+            pub.Title = updated.Title;
+            pub.Publisher = updated.Publisher;
+            pub.PricePerMonth = updated.PricePerMonth;
+            pub.ImagePath = updated.ImagePath;
+            
+            _db.SaveChanges();
+            LoadData();
+        }
     }
 
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (PublicationsList.SelectedItem is Models.Publication pub)
+        if (PublicationsList.SelectedItem is not Publication pub) return;
+
+        var result = MessageBox.Show($"Удалить издание \"{pub.Title}\"?", "Подтверждение",
+            MessageBoxButton.YesNo, MessageBoxImage.Question);
+        
+        if (result == MessageBoxResult.Yes)
         {
             _db.Publications.Remove(pub);
             _db.SaveChanges();
