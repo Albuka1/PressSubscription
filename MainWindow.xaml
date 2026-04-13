@@ -67,6 +67,17 @@
                                FontWeight="Bold" 
                                VerticalAlignment="Center"/>
                 </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Center" 
+                            VerticalAlignment="Center">
+                    <Button x:Name="ImportButton" 
+                            Content="Импорт из Excel" 
+                            Click="Import_Click"
+                            Style="{StaticResource PrimaryButton}"
+                            Padding="12,6"
+                            Visibility="Collapsed"/>
+                </StackPanel>
 
                 <!-- Правая часть с пользователем -->
                 <StackPanel Orientation="Horizontal" 
