@@ -4,6 +4,9 @@
 
 # PressSubscription - Учёт подписки на печатные издания
 
+[![Build .NET 8.0](https://github.com/Albuka1/PressSubscription/actions/workflows/build.yml/badge.svg)](https://github.com/Albuka1/PressSubscription/actions/workflows/build.yml)
+![.NET Version](https://img.shields.io/badge/.NET-8.0-blue)
+
 Курсовая работа по дисциплине «Разработка приложений»
 
 ## Запуск
