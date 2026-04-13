@@ -1,4 +1,5 @@
 using System.Linq;
+using System.IO;
 using System.Windows;
 using PressSubscription.Data;
 
@@ -30,8 +31,11 @@ public partial class PublicationsWindow : Window
         var priceText = Microsoft.VisualBasic.Interaction.InputBox("Цена:");
         if (!decimal.TryParse(priceText, out var price)) return;
 
-        var imagePath = Microsoft.VisualBasic.Interaction.InputBox("Путь к картинке:");
-        if (string.IsNullOrWhiteSpace(imagePath)) imagePath = "";
+        var imageFile = Microsoft.VisualBasic.Interaction.InputBox("Имя картинки (news.png):");
+        if (string.IsNullOrWhiteSpace(imageFile))
+            imageFile = "placeholder.png";
+
+        var imagePath = Path.Combine("Images", imageFile);
 
         var pub = new Models.Publication
         {
@@ -43,6 +47,7 @@ public partial class PublicationsWindow : Window
 
         _db.Publications.Add(pub);
         _db.SaveChanges();
+
         LoadData();
     }
 

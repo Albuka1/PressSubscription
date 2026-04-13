@@ -11,24 +11,27 @@ public class Publication
     public string Title { get; set; } = "";
     public string Publisher { get; set; } = "";
     public decimal PricePerMonth { get; set; }
-
     public string ImagePath { get; set; } = "";
 
     public BitmapImage Image
     {
         get
         {
-            var path = File.Exists(ImagePath)
-                ? ImagePath
+            var fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ImagePath);
+
+            var finalPath = File.Exists(fullPath)
+                ? fullPath
                 : GetPlaceholderPath();
 
-            return new BitmapImage(new Uri(path, UriKind.Absolute));
+            return new BitmapImage(new Uri(finalPath, UriKind.Absolute));
         }
     }
 
     private static string GetPlaceholderPath()
     {
-        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        return Path.Combine(baseDir, "Images", "placeholder.png");
+        return Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Images",
+            "placeholder.png");
     }
 }
