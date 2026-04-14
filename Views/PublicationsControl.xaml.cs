@@ -20,6 +20,12 @@ public partial class PublicationsControl : UserControl
         InitializeComponent();
         LoadData();
         ApplyUserPermissions();
+
+        this.IsVisibleChanged += (s, e) => 
+        {
+            if (this.IsVisible)
+                LoadData();
+        };
     }
 
     private void ApplyUserPermissions()
@@ -30,7 +36,7 @@ public partial class PublicationsControl : UserControl
         DeleteButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void LoadData()
+    public void LoadData()
     {
         _publications.Clear();
         foreach (var item in _db.Publications.ToList())

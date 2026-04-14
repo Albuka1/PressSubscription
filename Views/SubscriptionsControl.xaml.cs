@@ -36,7 +36,7 @@ public partial class SubscriptionsControl : UserControl
         DeleteButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void LoadData()
+    public void LoadData()
     {
         var list = _db.Subscriptions
             .Include(x => x.Subscriber)

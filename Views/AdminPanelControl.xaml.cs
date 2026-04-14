@@ -51,7 +51,7 @@ public partial class AdminPanelControl : UserControl
         UpdateAdminCount();
     }
 
-    private void LoadData()
+    public void LoadData()
     {
         _users.Clear();
         foreach (var user in _db.Users.OrderBy(u => u.Id))

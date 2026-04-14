@@ -55,12 +55,37 @@ public partial class MainWindow : Window
                 ExcelImportService.Import(dialog.FileName);
                 MessageBox.Show("Импорт данных успешно завершён!", "Успех", 
                     MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                RefreshAllControls();
             }
         }
         catch (System.Exception ex)
         {
             MessageBox.Show($"Ошибка при импорте:\n{ex.Message}", "Ошибка", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void RefreshAllControls()
+    {
+        if (SubscribersControl != null)
+        {
+            SubscribersControl.LoadData();
+        }
+        
+        if (PublicationsControl != null)
+        {
+            PublicationsControl.LoadData();
+        }
+
+        if (SubscriptionsControl != null)
+        {
+            SubscriptionsControl.LoadData();
+        }
+
+        if (AdminPanelControl != null)
+        {
+            AdminPanelControl.LoadData();
         }
     }
 

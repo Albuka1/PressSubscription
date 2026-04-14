@@ -18,6 +18,12 @@ public partial class SubscribersControl : UserControl
         InitializeComponent();
         LoadData();
         ApplyUserPermissions();
+
+        this.IsVisibleChanged += (s, e) => 
+        {
+            if (this.IsVisible)
+                LoadData();
+        };
     }
 
     private void ApplyUserPermissions()
@@ -29,7 +35,7 @@ public partial class SubscribersControl : UserControl
         DeleteButton.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void LoadData()
+    public void LoadData()
     {
         _subscribers.Clear();
         foreach (var item in _db.Subscribers.ToList())
