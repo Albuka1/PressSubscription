@@ -18,10 +18,26 @@ public partial class PublicationCardWindow : Window
         _publication = publication;
         LoadPublicationData();
         LoadSubscribers();
-        StartDatePicker.SelectedDate = DateTime.Today; // устанавливаем сегодняшнюю дату
+        StartDatePicker.SelectedDate = DateTime.Today;
         UpdatePreview();
         MonthsBox.TextChanged += (s, e) => UpdatePreview();
         SubscriberCombo.SelectionChanged += (s, e) => UpdatePreview();
+        
+        ApplyUserPermissions();
+    }
+
+    private void ApplyUserPermissions()
+    {
+        var isAdmin = AuthService.IsAdmin();
+        
+        if (!isAdmin)
+        {
+            SubscribeButton.IsEnabled = false;
+            SubscribeButton.Content = "⛔ Только администратору";
+            SubscriberCombo.IsEnabled = false;
+            MonthsBox.IsEnabled = false;
+            StartDatePicker.IsEnabled = false;
+        }
     }
 
     private void LoadPublicationData()
@@ -63,52 +79,61 @@ public partial class PublicationCardWindow : Window
     }
 
     private void Subscribe_Click(object sender, RoutedEventArgs e)
-{
-    try
     {
-        if (SubscriberCombo.SelectedItem is not Subscriber subscriber)
+        if (!AuthService.IsAdmin())
         {
-            MessageBox.Show("Выберите подписчика", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("У вас недостаточно прав для оформления подписки", 
+                "Доступ запрещён", 
+                MessageBoxButton.OK, 
+                MessageBoxImage.Warning);
             return;
         }
 
-        if (!int.TryParse(MonthsBox.Text, out var months) || months <= 0)
+        try
         {
-            MessageBox.Show("Введите корректное количество месяцев (больше 0)", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            if (SubscriberCombo.SelectedItem is not Subscriber subscriber)
+            {
+                MessageBox.Show("Выберите подписчика", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!int.TryParse(MonthsBox.Text, out var months) || months <= 0)
+            {
+                MessageBox.Show("Введите корректное количество месяцев (больше 0)", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var startDate = StartDatePicker.SelectedDate ?? DateTime.Today;
+
+            var subscription = new Subscription
+            {
+                SubscriberId = subscriber.Id,
+                PublicationId = _publication.Id,
+                StartDate = startDate,
+                Months = months,
+            };
+
+            SubscriptionCalculator.Calculate(subscription);
+
+            _db.Subscriptions.Add(subscription);
+            _db.SaveChanges();
+
+            MessageBox.Show($"Подписка на \"{_publication.Title}\" оформлена!\n\n" +
+                            $"Подписчик: {subscriber.FullName}\n" +
+                            $"Период: {startDate:dd.MM.yyyy} на {months} мес.\n" +
+                            $"Стоимость: {subscription.TotalCost:N2} ₽",
+                            "Успех",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+
+            DialogResult = true;
+            Close();
         }
-
-        var startDate = StartDatePicker.SelectedDate ?? DateTime.Today;
-
-        var subscription = new Subscription
+        catch (Exception ex)
         {
-            SubscriberId = subscriber.Id,
-            PublicationId = _publication.Id,
-            StartDate = startDate,
-            Months = months,
-        };
-
-        SubscriptionCalculator.Calculate(subscription);
-
-        _db.Subscriptions.Add(subscription);
-        _db.SaveChanges();
-
-        MessageBox.Show($"Подписка на \"{_publication.Title}\" оформлена!\n\n" +
-                        $"Подписчик: {subscriber.FullName}\n" +
-                        $"Период: {startDate:dd.MM.yyyy} на {months} мес.\n" +
-                        $"Стоимость: {subscription.TotalCost:N2} ₽",
-                        "Успех",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-
-        DialogResult = true;
-        Close();
+            MessageBox.Show($"Ошибка при оформлении подписки:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
-    catch (Exception ex)
-    {
-        MessageBox.Show($"Ошибка при оформлении подписки:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-    }
-}
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
