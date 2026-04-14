@@ -14,37 +14,30 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - name: Checkout repository
+    - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup .NET 8
+    - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Build Release
+      run: dotnet build -c Release
 
-    - name: Publish application
+    - name: Create ZIP
       run: |
-        dotnet publish `
-          -c Release `
-          -r win-x64 `
-          --self-contained true `
-          -p:PublishSingleFile=true `
-          -p:IncludeNativeLibrariesForSelfExtract=true `
-          -o publish
+        Compress-Archive `
+          -Path "bin/Release/net8.0-windows/*" `
+          -DestinationPath PressSubscription.zip
 
-    - name: Create ZIP archive
-      run: Compress-Archive -Path publish/* -DestinationPath PressSubscription.zip
-
-    - name: Upload artifact
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PressSubscription
         path: PressSubscription.zip
 
-    - name: Create GitHub Release
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: PressSubscription.zip
