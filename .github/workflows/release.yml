@@ -14,30 +14,38 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup .NET 8.0
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-    
+
+    - name: Restore dependencies
+      run: dotnet restore
+
     - name: Publish application
-      run: dotnet publish -c Release -o publish -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-    
-    - name: Copy Images and Assets
       run: |
-        Copy-Item -Path "Images" -Destination "publish/Images" -Recurse -Force
-        Copy-Item -Path "Assets" -Destination "publish/Assets" -Recurse -Force
-        Copy-Item -Path "ImportTemplate.xlsx" -Destination "publish/ImportTemplate.xlsx" -Force
-    
-    - name: Upload build artifact
+        dotnet publish `
+          -c Release `
+          -r win-x64 `
+          --self-contained true `
+          -p:PublishSingleFile=true `
+          -p:IncludeNativeLibrariesForSelfExtract=true `
+          -o publish
+
+    - name: Create ZIP archive
+      run: Compress-Archive -Path publish/* -DestinationPath PressSubscription.zip
+
+    - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: PressSubscription
-        path: publish/
-    
-    - name: Create Release
+        path: PressSubscription.zip
+
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        files: publish/PressSubscription.exe
+        files: PressSubscription.zip
         generate_release_notes: true
